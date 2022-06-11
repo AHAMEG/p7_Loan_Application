@@ -61,6 +61,73 @@ def main():
     image = PIL.Image.open(path)
     st.image(image, width=100)
 
+
+    ######################## Functions #######################################################
+    def get_list_display_features(f, def_n, key):
+        all_feat = f
+        n = st.slider("Nb of features to display",
+                      min_value=2, max_value=40,
+                      value=def_n, step=None, format=None, key=key)
+
+        disp_cols = list(get_features_importances().sort_values(ascending=False).iloc[:n].index)
+
+        box_cols = st.multiselect(
+            'Choose the features to display:',
+            sorted(all_feat),
+            default=disp_cols, key=key)
+        return box_cols
+
+    def plot_scatter_projection(X, ser_clust, n_display, plot_highlight, x_customer,
+                                figsize=(10, 6), size=10, fontsize=12, columns=None):
+        fig = plt.figure(figsize=figsize)
+        ax = fig.add_subplot(111)
+
+        X_all = X  # pd.concat([X, x_cust], axis=0)
+        ind_neigh = list(plot_highlight.index)
+        customer_idx = x_customer.index[0]
+
+        columns = X_all.columns if columns is None else columns
+
+        # st.write('X_all :', X_all.head(5))
+        # st.write('ind_neigh :', ind_neigh)
+        # st.write('customer_idx :', customer_idx)
+        # st.write('columns', columns)
+        df_data = X_all.loc[:, columns]
+        # st.write('df_data', df_data.head(5))
+        ax.set_title('Two features compared', fontsize=fontsize + 2, fontweight='bold')
+        ax.set_xlabel(columns[0], fontsize=fontsize)
+        ax.set_ylabel(columns[1], fontsize=fontsize)
+        # Showing points, cluster by cluster
+        colors = ['green', 'red']
+        for i, name_clust in enumerate(ser_clust.unique()):
+            ind = ser_clust[ser_clust == name_clust].index
+
+            if n_display is not None:
+                display_samp = random.sample(set(list(X.index)), 200)
+                ind = [i for i in ind if i in display_samp]
+            # plot only a random selection of random sample points
+            ax.scatter(df_data.loc[ind].iloc[:, 0],
+                       df_data.loc[ind].iloc[:, 1],
+                       s=size, alpha=0.7, c=colors[i], zorder=1,
+                       label=f"Random sample ({name_clust})")
+            # plot nearest neighbors
+            ax.scatter(df_data.loc[ind_neigh].iloc[:, 0],
+                       df_data.loc[ind_neigh].iloc[:, 1],
+                       s=size * 5, alpha=0.7, c=colors[i], ec='k', zorder=3,
+                       label=f"Nearest neighbors ({name_clust})")
+
+            # plot the applicant customer
+            ax.scatter(df_data.loc[customer_idx].iloc[:, 0],
+                       df_data.loc[customer_idx].iloc[:, 1],
+                       s=size * 10, alpha=0.7, c='yellow', ec='k', zorder=10,
+                       label="Applicant customer")
+
+            ax.tick_params(axis='both', which='major', labelsize=fontsize)
+
+        ax.legend(prop={'size': fontsize - 2})
+
+        return fig
+
     ###############################################################################
     #                      LIST OF API REQUEST FUNCTIONS
     ###############################################################################
@@ -78,7 +145,7 @@ def main():
         return id_customers
 
     # Get selected customer's data (cached)
-    # local test api : http://127.0.0.1:5000/app/data_cust/?SK_ID_CURR=100002
+    # local test api : http://127.0.0.1:5000/app/data_cust/?SK_ID_CURR=165690
     data_type = []
 
     @st.cache
@@ -88,36 +155,38 @@ def main():
         # Requesting the API and saving the response
         response = requests.get(data_api_url)
         # Convert from JSON format to Python dict
-        content = json.loads(response.content.decode('utf-8'))  #
-        df_cus = json_normalize(content['data'])  # Results contain the required data
-        return df_cus
+        content = json.loads(response.content.decode('utf-8'))
+        x_custom = pd.DataFrame(content['data'])
+        # x_cust = json_normalize(content['data'])
+        y_customer = (pd.Series(content['y_cust']).rename('TARGET'))
+        # y_customer = json_normalize(content['y_cust'].rename('TARGET'))
+        return x_custom, y_customer
 
-    # Get list of customers index
-    # local test api : http://127.0.0.1:5000/app/cust_index/?SK_ID_CURR=100002
     @st.cache
-    def customer_ind(selected_id):
+    def get_all_cust_data():
         # URL of the sk_id API
-        cust_index_api_url = API_URL + "cust_index/?SK_ID_CURR=" + str(selected_id)
+        data_api_url = API_URL + "all_proc_data_tr/"
         # Requesting the API and saving the response
-        response = requests.get(cust_index_api_url)
-        # # Convert from JSON format to Python dict
+        response = requests.get(data_api_url)
+        # Convert from JSON format to Python dict
         content = json.loads(response.content.decode('utf-8'))  #
-        # # Getting the values of "index" from the content
-        ind = (content['index'])
-        return ind
+        x_all_cust = json_normalize(content['X_train'])  # Results contain the required data
+        y_all_cust = json_normalize(content['y_train'].rename('TARGET'))  # Results contain the required data
+        return x_all_cust, y_all_cust
 
     # Get score (cached)
     @st.cache
     def get_score_model(selected_id):
         # URL of the sk_id API
-        score_api_url = API_URL + "score/?SK_ID_CURR=" + str(selected_id)
+        score_api_url = API_URL + "scoring_cust/?SK_ID_CURR=" + str(selected_id)
         # Requesting the API and saving the response
         response = requests.get(score_api_url)
         # Convert from JSON format to Python dict
         content = json.loads(response.content.decode('utf-8'))
         # Getting the values of "ID" from the content
-        score_model = (content['data'])
-        return score_model
+        score_model = (content['score'])
+        threshold = content['thresh']
+        return score_model, threshold
 
     # Get list of shap_values (cached)
     # local test api : http://127.0.0.1:5000/app/shap_val//?SK_ID_CURR=10002
@@ -130,34 +199,10 @@ def main():
         # Convert from JSON format to Python dict
         content = json.loads(response.content)
         # Getting the values of "ID" from the content
-        shapvals = pd.Series(content['data']).values
-        return shapvals
+        shapvals = pd.DataFrame(content['shap_val_cust'].values())
+        expec_vals = pd.DataFrame(content['expected_vals'].values())
+        return shapvals, expec_vals
 
-    # Get all data in train set (cached)
-    @st.cache
-    def get_data_x_tr():
-        # URL of the scoring API
-        data_tr_api_url = API_URL + "x_train/"
-        # save the response of API request
-        response = requests.get(data_tr_api_url)
-        # convert from JSON format to Python dict
-        content = json.loads(response.content.decode('utf-8'))
-        # convert data to pd.Series
-        x_tra = (pd.DataFrame(content['X_train']))
-        return x_tra
-
-    # Get all data in train set (cached)
-    @st.cache
-    def get_data_y_tr():
-        # URL of the scoring API
-        data_tr_api_url = API_URL + "y_train/"
-        # save the response of API request
-        response = requests.get(data_tr_api_url)
-        # convert from JSON format to Python dict
-        content = json.loads(response.content.decode('utf-8'))
-        # convert data to pd.Series
-        y_tra = (pd.Series(content['y_train']['TARGET']).rename('TARGET'))
-        return y_tra
 
     #############################################
     #############################################
@@ -187,32 +232,6 @@ def main():
         features_name = pd.Series(content['data']).values
         return features_name
 
-    # Get threshold (cached)
-    @st.cache
-    def get_thresh_model():
-        # URL of the sk_id API
-        threshold_api_url = API_URL + "threshold/"
-        # Requesting the API and saving the response
-        response = requests.get(threshold_api_url)
-        # Convert from JSON format to Python dict
-        content = json.loads(response.content.decode('utf-8'))
-        # Getting the values of "ID" from the content
-        thresh_model = content['data']["0"]
-        return thresh_model
-
-    # Get explainer (cached)
-    @st.cache
-    def get_shap_explainer():
-        # URL of the sk_id API
-        explainer_shap_api_url = API_URL + "explainer/"
-        # Requesting the API and saving the response
-        response = requests.get(explainer_shap_api_url)
-        # Convert from JSON format to Python dict
-        content = json.loads(response.content)
-        # Getting the values of "ID" from the content
-        explainer_shap_json = pd.Series(content['data']).values
-        return explainer_shap_json
-
     # Get the list of feature importances (according to lgbm classification model)
     @st.cache
     def get_features_importances():
@@ -236,32 +255,32 @@ def main():
         # convert from JSON format to Python dict
         content = json.loads(response.content.decode('utf-8'))
         # convert data to pd.DataFrame and pd.Series
-        targ_all_cust = (pd.Series(content['target_all_cust']).rename('TARGET'))
-        target_select_cust = (pd.Series(content['target_selected_cust']).rename('TARGET'))
-        target_neig = (pd.Series(content['target_neigh']).rename('TARGET'))
-
-        data_all_customers = pd.DataFrame(content['data_all_cust'])
-        data_selected_customer = pd.DataFrame(content['data_selected_cust'])
+        # targ_all_cust = (pd.Series(content['target_all_cust']).rename('TARGET'))
+        # target_select_cust = (pd.Series(content['target_selected_cust']).rename('TARGET'))
+        # data_all_customers = pd.DataFrame(content['data_all_cust'])
         data_neig = pd.DataFrame(content['data_neigh'])
+        target_neig = (pd.Series(content['y_neigh']).rename('TARGET'))
+        return data_neig, target_neig
 
-        return targ_all_cust, target_select_cust, data_all_customers, data_selected_customer, data_neig, target_neig  # x_neig, y_neig, fea_sel, tar_sel, tar_cust
-
-    # Get data from 20 nearest neighbors in train set (cached)
+    # Get data from 1000 nearest neighbors in train set (cached)
     @st.cache
-    def get_data_select():
-        # URL of the scoring API (ex: SK_ID_CURR = 100005)
-        select_data_api_url = API_URL + "data_selected/"
+    def get_data_thousand_neigh(selected_id):
+        thousand_neight_data_api_url = API_URL + "thousand_neigh/?SK_ID_CURR=" + str(selected_id)
         # save the response of API request
-        response = requests.get(select_data_api_url)
+        response = requests.get(thousand_neight_data_api_url)
         # convert from JSON format to Python dict
         content = json.loads(response.content.decode('utf-8'))
         # convert data to pd.DataFrame and pd.Series
-        feat_sel = pd.DataFrame(content['features_sel'])
-        tar_sel = json_normalize(content['target_sel'])
-        dat_sel = pd.DataFrame(content['data_selected'])
-        return dat_sel, feat_sel, tar_sel
+        # targ_all_cust = (pd.Series(content['target_all_cust']).rename('TARGET'))
+        # target_select_cust = (pd.Series(content['target_selected_cust']).rename('TARGET'))
+        # data_all_customers = pd.DataFrame(content['data_all_cust'])
+        data_thousand_neig = pd.DataFrame(content['X_thousand_neigh'])
+        x_custo = pd.DataFrame(content['x_custom'])
+        target_thousand_neig = (pd.Series(content['y_thousand_neigh']).rename('TARGET'))
+        return data_thousand_neig, target_thousand_neig, x_custo
 
-    #############################################################################
+
+            #############################################################################
     #                          Selected id
     #############################################################################
     # list of customer's ID's
@@ -269,121 +288,6 @@ def main():
     # Selected customer's ID
     selected_id = st.sidebar.selectbox('Select customer ID from list:', cust_id, key=18)
     st.write('Your selected ID = ', selected_id)
-
-    def get_list_display_features(f, def_n, key):
-        all_feat = f
-        n = st.slider("Nb of features to display",
-                      min_value=2, max_value=40,
-                      value=def_n, step=None, format=None, key=key)
-
-        disp_cols = list(get_features_importances().sort_values(ascending=False).iloc[:n].index)
-
-        box_cols = st.multiselect(
-            'Choose the features to display:',
-            sorted(all_feat),
-            default=disp_cols, key=key)
-        return box_cols
-
-    # Affiche les valeurs des clients en fonctions de deux paramètres en montrant leur classe
-    # Compare l'ensemble des clients par rapport aux plus proches voisins et au client choisi.
-    # X = données pour le calcul de la projection
-    # ser_clust = données pour la classification des points (2 classes) (pd.Series)
-    # n_display = items à tracer parmi toutes les données
-    # plot_highlight = liste des index des plus proches voisins
-    # X_cust = pd.Series des data de l'applicant customer
-    # figsize=(10, 6)
-    # size=10
-    # fontsize=12
-    # columns=None : si None, alors projection sur toutes les variables, si plus de 2 projection
-
-    # (data_all_cust, target_all_cust, 200, data_neigh, data_selected_cust,
-    # figsize=(10, 6), size = 20, fontsize = 16, columns = data_all_cust.columns[5:7])
-
-    def plot_scatter_projection(X, ser_clust, n_display, plot_highlight, X_cust,
-                                figsize=(10, 6), size=10, fontsize=12, columns=None):
-        fig = plt.figure(figsize=figsize)
-        ax = fig.add_subplot(111)
-
-        X_all = X #pd.concat([X, X_cust], axis=0)
-        ind_neigh = list(plot_highlight.index)
-        customer_idx = X_cust.index[0]
-
-        columns = X_all.columns if columns is None else columns
-
-        st.write('X_all :', X_all.head(5))
-        st.write('ind_neigh :', ind_neigh)
-        st.write('customer_idx :', customer_idx)
-        st.write('columns', columns)
-
-        # if len(columns) == 2:
-        #     # if only 2 columns passed
-        df_data = X_all.loc[:, columns]
-        st.write('df_data', df_data.head(5))
-        ax.set_title('Two features compared', fontsize=fontsize + 2, fontweight='bold')
-        ax.set_xlabel(columns[0], fontsize=fontsize)
-        ax.set_ylabel(columns[1], fontsize=fontsize)
-        #
-        # elif len(columns) > 2:
-        #     # if more than 2 columns passed
-        #     # Compute T-SNE projection
-        #     tsne = TSNE(n_components=2, random_state=14)
-        #     df_proj = pd.DataFrame(tsne.fit_transform(X_all),
-        #                            index=X_all.index,
-        #                            columns=['t-SNE' + str(i) for i in range(2)])
-        #     trustw = trustworthiness(X_all, df_proj, n_neighbors=5, metric='euclidean')
-        #     trustw = "{:.2f}".format(trustw)
-        #     ax.set_title(f't-SNE projection (trustworthiness={trustw})',
-        #                  fontsize=fontsize + 2, fontweight='bold')
-        #     df_data = df_proj
-        #     ax.set_xlabel("projection axis 1", fontsize=fontsize)
-        #     ax.set_ylabel("projection axis 2", fontsize=fontsize)
-        #
-        # else:
-        #     # si une colonne seulement
-        #     df_data = pd.concat([X_all.loc[:, columns], X_all.loc[:, columns]], axis=1)
-        #     ax.set_title('One feature', fontsize=fontsize + 2, fontweight='bold')
-        #     ax.set_xlabel(columns[0], fontsize=fontsize)
-        #     ax.set_ylabel(columns[0], fontsize=fontsize)
-        #
-        # Showing points, cluster by cluster
-        colors = ['green', 'red']
-        for i, name_clust in enumerate(ser_clust.unique()):
-            ind = ser_clust[ser_clust == name_clust].index
-
-            if n_display is not None:
-                display_samp = random.sample(set(list(X.index)), 200)
-                ind = [i for i in ind if i in display_samp]
-            # plot only a random selection of random sample points
-            ax.scatter(df_data.loc[ind].iloc[:, 0],
-                       df_data.loc[ind].iloc[:, 1],
-                       s=size, alpha=0.7, c=colors[i], zorder=1,
-                       label=f"Random sample ({name_clust})")
-            # # plot nearest neighbors
-            # ax.scatter(df_data.loc[ind_neigh].iloc[:, 0],
-            #            df_data.loc[ind_neigh].iloc[:, 1],
-            #            s=size * 5, alpha=0.7, c=colors[i], ec='k', zorder=3,
-            #            label=f"Nearest neighbors ({name_clust})")
-
-            # # plot the applicant customer
-            # ax.scatter(df_data.loc[customer_idx].iloc[:, 0],  # :customer_idx
-            #             df_data.loc[customer_idx].iloc[:, 1],  # :customer_idx
-            #             s=size * 10, alpha=0.7, c='yellow', ec='k', zorder=10,
-            #             label="Applicant customer")
-
-            ax.tick_params(axis='both', which='major', labelsize=fontsize)
-
-        ax.legend(prop={'size': fontsize - 2})
-
-        return fig
-
-
-    # shape_values
-    @st.cache
-    def shap_val():
-        path = os.path.join('shap_vals.pkl')
-        with open(path, 'rb') as file:
-            sh_val = joblib.load(file)
-        return sh_val
 
     ############################################################################
     #                           Graphics Functions
@@ -395,21 +299,20 @@ def main():
 
     # Local SHAP Graphs
     @st.cache
-    def waterfall_plot(nb, ft):
-        return shap.plots._waterfall.waterfall_legacy(expected_val[1], shap_vals[index_cust],
+    def waterfall_plot(nb, ft, expected_val, shap_val):
+        return shap.plots._waterfall.waterfall_legacy(expected_val, shap_val[0, :],
                                                       max_display=nb, feature_names=ft)
 
     # Local SHAP Graphs
     @st.cache(allow_output_mutation=True)  #
-    def force_plot(index_cust):
+    def force_plot():
         shap.initjs()
-        return shap.force_plot(expected_val[1], shap_vals[index_cust], matplotlib=True)
+        return shap.force_plot(expected_val, shap_vals[0, :], matplotlib=True)
 
-    # Local SHAP Graphs
-    @st.cache
-    def summary_plot():
-        x_tr = get_data_x_tr()
-        return shap.summary_plot(shap_vals, features=x_tr, feature_names=features)  # .sample(1000)
+    # # Local SHAP Graphs
+    # @st.cache
+    # def summary_plot():
+    #     return shap.summary_plot(shap_vals, features=x_tr, feature_names=features)  # .sample(1000)
 
     # Gauge Chart
     @st.cache
@@ -460,21 +363,15 @@ def main():
     ##############################################################################
     if st.sidebar.checkbox("Customer's data"):
         st.markdown('data of the selected customer :')
-        data_selected_cust = get_selected_cust_data(selected_id)
-        data_selected_cust.columns = data_selected_cust.columns.str.split('.').str[0]
+        data_selected_cust, y_cust = get_selected_cust_data(selected_id)
+        # data_selected_cust.columns = data_selected_cust.columns.str.split('.').str[0]
         st.write(data_selected_cust)
-        # # data loading
-        # with open('df.csv', 'rb') as file:
-        #     df = joblib.load(file)
-        # st.write("df :", df.head(50))
     ##############################################################################
     #                         Model's decision checkbox
     ##############################################################################
     if st.sidebar.checkbox("Model's decision", key=38):
-        # Get score
-        score = get_score_model(selected_id)
-        # Threshold model
-        threshold_model = get_thresh_model()
+        # Get score & threshold model
+        score, threshold_model = get_score_model(selected_id)
         # Display score (default probability)
         st.write('Default probability : {:.0f}%'.format(score * 100))
         # Display default threshold
@@ -490,31 +387,22 @@ def main():
         ##########################################################################
         figure = gauge_plot(score, threshold_model)
         st.write(figure)
-        # Plot the graph on the dashboard
-        # st.pyplot(plt.gcf())
         # Add markdown
         st.markdown('_Gauge meter plot for the applicant customer._')
         expander = st.expander("Concerning the classification model...")
         expander.write("The prediction was made using the Light Gradient Boosting classifier Model")
         expander.write("The default model is calculated to maximize air under ROC curve => maximize \
                                         True Positives rate (TP) detection and minimize False Negatives rate (FP)")
-
         ##########################################################################
         #                 Display local SHAP waterfall checkbox
         ##########################################################################
         if st.checkbox('Display local interpretation', key=25):
             with st.spinner('SHAP waterfall plots displaying in progress..... Please wait.......'):
-                # Get expected values
-                expected_val = values_expect()
-                # #st.write('expected value =', expected_val[1])
-                # Get Shap values for customer
-                shap_vals_original = shap_val()
-                shap_vals = shap_vals_original[0]
-                # Get index customer
-                index_cust = customer_ind(selected_id)
+                # Get Shap values for customer & expected values
+                shap_vals, expected_vals = values_shap(selected_id)
+                # index_cust = customer_ind(selected_id)
                 # Get features names
                 features = feat()
-                # st.write(features)
                 # st.write(features)
                 nb_features = st.slider("Number of features to display",
                                         min_value=2,
@@ -524,35 +412,31 @@ def main():
                                         format=None,
                                         key=14)
                 # draw the waterfall graph (only for the customer with scaling
-                waterfall_plot(nb_features, features)
+                waterfall_plot(nb_features, features, expected_vals[0][0], shap_vals.values)
                 plt.gcf()
                 st.pyplot(plt.gcf())
                 # Add markdown
                 st.markdown('_SHAP waterfall Plot for the applicant customer._')
-                #     # Add details title
+                # Add details title
                 expander = st.expander("Concerning the SHAP waterfall  plot...")
-                #     # Add explanations
+                # Add explanations
                 expander.write("The above waterfall  plot displays \
-            #     explanations for the individual prediction of the applicant customer.\
-                  The bottom of a waterfall plot starts as the expected value of the model output \
-                  (i.e. the value obtained if no information (features) were provided), and then \
-            #     each row shows how the positive (red) or negative (blue) contribution of \
-            #     each feature moves the value from the expected model output over the \
-            #     background dataset to the model output for this prediction.")
+                explanations for the individual prediction of the applicant customer.\
+                The bottom of a waterfall plot starts as the expected value of the model output \
+                (i.e. the value obtained if no information (features) were provided), and then \
+                each row shows how the positive (red) or negative (blue) contribution of \
+                each feature moves the value from the expected model output over the \
+                background dataset to the model output for this prediction.")
 
         ##########################################################################
         #              Display feature's distribution (Boxplots)
         ##########################################################################
         if st.checkbox('show features distribution by class', key=20):
             st.header('Boxplots of the main features')
-            fig, ax = plt.subplots(figsize=(15, 4))
+            fig, ax = plt.subplots(figsize=(20, 15))
             with st.spinner('Boxplot creation in progress...please wait.....'):
-                # df loading
-                with open('df.csv', 'rb') as file:
-                    df = joblib.load(file)
                 # Get Shap values for customer
-                shap_vals_original = shap_val()
-                shap_vals = shap_vals_original[0]
+                shap_vals, expected_vals = values_shap(selected_id)
                 # Get features names
                 features = feat()
                 # Get selected columns
@@ -560,41 +444,34 @@ def main():
                 # -----------------------------------------------------------------------------------------------
                 # Get tagets and data for : all customers + Applicant customer + 20 neighbors of selected customer
                 # -----------------------------------------------------------------------------------------------
-                target_all_cust, target_selected_cust, data_all_cust, data_selected_cust, data_neigh, target_neigh = \
-                    get_data_neigh(selected_id)
+                # neighbors + Applicant customer :
+                data_neigh, target_neigh = get_data_neigh(selected_id)
+                data_thousand_neigh, target_thousand_neigh, x_customer = get_data_thousand_neigh(selected_id)
 
+                x_cust, y_cust = get_selected_cust_data(selected_id)
+                x_customer.columns = x_customer.columns.str.split('.').str[0]
                 # Target impuatation (0 : 'repaid (....), 1 : not repaid (....)
                 # -------------------------------------------------------------
-                target_all_cust = target_all_cust.replace({0: 'repaid (all_cust)',
-                                                           1: 'not repaid (all_cust)'})
-                target_selected_cust = target_selected_cust.replace({0: 'repaid (selected_cust)',
-                                                                     1: 'not repaid (selected_cust)'})
-
                 target_neigh = target_neigh.replace({0: 'repaid (neighbors)',
                                                      1: 'not repaid (neighbors)'})
+                target_thousand_neigh = target_thousand_neigh.replace({0: 'repaid (neighbors)',
+                                                                       1: 'not repaid (neighbors)'})
+                y_cust = y_cust.replace({0: 'repaid (customer)',
+                                         1: 'not repaid (customer)'})
 
-                # st.write("target_all_cust :", target_all_cust)
-                # st.write("target_selected_cust :", target_selected_cust)
-                st.write("data_all_cust :", data_all_cust.head(50))
-                # st.write("data_selected_cust :", data_selected_cust)
-                # st.write("target neigh :", target_neigh)
-                # st.write("data neigh :", data_neigh)
+                # y_cust.rename(columns={'10006':'TARGET'}, inplace=True)
+                # ------------------------------
+                # Get 1000 neighbors personal data
+                # ------------------------------
+                df_thousand_neigh = pd.concat([data_thousand_neigh[disp_box_cols], target_thousand_neigh], axis=1)
+                df_melt_thousand_neigh = df_thousand_neigh.reset_index()
+                df_melt_thousand_neigh.columns = ['index'] + list(df_melt_thousand_neigh.columns)[1:]
+                df_melt_thousand_neigh = df_melt_thousand_neigh.melt(id_vars=['index', 'TARGET'],
+                                                                     value_vars=disp_box_cols,
+                                                                     var_name="variables",  # "variables",
+                                                                     value_name="values")
 
-                # ------------------
-                # All customers data
-                # ------------------
-                df_all_cust = pd.concat([data_all_cust[disp_box_cols], target_all_cust], axis=1)
-                df_melt_all_cust = df_all_cust.reset_index()
-                df_melt_all_cust.columns = ['index'] + list(df_melt_all_cust.columns)[1:]
-                df_melt_all_cust = df_melt_all_cust.melt(id_vars=['index', 'TARGET'],
-                                                         value_vars=disp_box_cols,
-                                                         var_name="variables",
-                                                         value_name="values")
-                # st.write("df_melt_all_cust modifiée:", df_melt_all_cust)
-                # ----------------------
-                #  All customers boxplot
-                # ----------------------
-                sns.boxplot(data=df_melt_all_cust, x='variables', y='values',
+                sns.boxplot(data=df_melt_thousand_neigh, x='variables', y='values',
                             hue='TARGET', linewidth=1, width=0.4,
                             palette=['tab:green', 'tab:red'], showfliers=False,
                             saturation=0.5, ax=ax)
@@ -603,26 +480,20 @@ def main():
                 # Get 20 neighbors personal data
                 # ------------------------------
                 df_neigh = pd.concat([data_neigh[disp_box_cols], target_neigh], axis=1)
-                # st.write("df_neigh :", df_neigh.head(10))
                 df_melt_neigh = df_neigh.reset_index()
                 df_melt_neigh.columns = ['index'] + list(df_melt_neigh.columns)[1:]
                 df_melt_neigh = df_melt_neigh.melt(id_vars=['index', 'TARGET'],
                                                    value_vars=disp_box_cols,
                                                    var_name="variables",  # "variables",
                                                    value_name="values")
-                # st.write("df_melt_neigh:", df_melt_neigh)
 
-                # -------------------------------------------
-                # 20 Applicant customer Neighbors swarmplot
-                # -------------------------------------------
-                sns.swarmplot(data=df_melt_neigh, x='variables', y='values',
-                              hue='TARGET', linewidth=1,
+                sns.swarmplot(data=df_melt_neigh, x='variables', y='values', hue='TARGET', linewidth=1,
                               palette=['darkgreen', 'darkred'], marker='o', edgecolor='k', ax=ax)
 
                 # -----------------------
                 # Applicant customer data
                 # -----------------------
-                df_selected_cust = pd.concat([data_selected_cust[disp_box_cols], target_selected_cust], axis=1)
+                df_selected_cust = pd.concat([x_customer[disp_box_cols], y_cust], axis=1)
                 # st.write("df_sel_cust :", df_sel_cust)
                 df_melt_sel_cust = df_selected_cust.reset_index()
                 df_melt_sel_cust.columns = ['index'] + list(df_melt_sel_cust.columns)[1:]
@@ -630,14 +501,10 @@ def main():
                                                          value_vars=disp_box_cols,
                                                          var_name="variables",
                                                          value_name="values")
-                # st.write("df_melt_selected_cust:", df_melt_sel_cust)
-                # -----------------------------
-                #  Applicant customer swarmplot
-                # -----------------------------
+
                 sns.swarmplot(data=df_melt_sel_cust, x='variables', y='values',
                               linewidth=1, color='y', marker='o', size=10,
-                              edgecolor='k', label='Applicant Customer', ax=ax)
-
+                              edgecolor='k', label='applicant customer', ax=ax)
 
                 # legend
                 h, _ = ax.get_legend_handles_labels()
@@ -652,45 +519,17 @@ def main():
                 plt.show()
 
                 st.markdown('_Dispersion of the main features for random sample,\
-                 20 nearest neighbors and applicant customer_')
+                20 nearest neighbors and applicant customer_')
 
                 expander = st.expander("Concerning the dispersion graph...")
-
                 expander.write("These boxplots show the dispersion of the preprocessed features values\
-                 used by the model to make a prediction. The green boxplot are for the customers that repaid \
+                used by the model to make a prediction. The green boxplot are for the customers that repaid \
                 their loan, and red boxplots are for the customers that didn't repay it.Over the boxplots are\
-                 superimposed (markers) the values\
-                 of the features for the 20 nearest neighbors of the applicant customer in the training set. The \
-                 color of the markers indicate whether or not these neighbors repaid their loan. \
-                 Values for the applicant customer are superimposed in yellow.")
+                superimposed (markers) the values\
+                of the features for the 20 nearest neighbors of the applicant customer in the training set. The \
+                color of the markers indicate whether or not these neighbors repaid their loan. \
+                Values for the applicant customer are superimposed in yellow.")
 
-    if st.sidebar.checkbox("Two features compare", key=50):
-        target_all_cust, target_selected_cust, data_all_cust, data_selected_cust, data_neigh, target_neigh = \
-            get_data_neigh(selected_id)
-
-        # df loading
-        with open('df.csv', 'rb') as file:
-            df = joblib.load(file)
-
-        targ_all_cust = df["TARGET"]
-        dataa_all_cust = df.drop(["index", "TARGET", "SK_ID_CURR"], axis=1)
-        # st.write('data_all_cust shape', data_all_cust.shape)
-        # st.write('data_all_cust', data_all_cust.head(2))
-        # st.write('target_all_cust shape', target_all_cust.shape)
-        # st.write('target_all_cust', target_all_cust)
-        # st.write('data_neigh shape', data_neigh.shape)
-        # st.write('data_neigh', data_neigh)
-        # st.write('data_selected_cust shape', data_selected_cust.shape)
-        # st.write('data_selected_cust', data_selected_cust)
-        plot_scatter_projection(X=dataa_all_cust,
-                                ser_clust=targ_all_cust, #.replace({0: 'repaid', 1: 'not repaid'}),
-                                n_display=200,
-                                plot_highlight=data_neigh,
-                                X_cust=data_selected_cust,
-                                figsize=(10, 6),
-                                size=20,
-                                fontsize=16,
-                                columns=dataa_all_cust.columns[5:7])
 
 if __name__ == "__main__":
     main()

@@ -40,7 +40,8 @@ with open(path, 'rb') as file:
 
 # dict_cleaned loading
 # -------------
-with open('Data', 'dict_cleaned.pkl') as file:
+path = os.path.join('Data', 'dict_cleaned.pkl')
+with open(path, 'rb') as file:
     dict_cleaned = joblib.load(file)
 
 # data loading

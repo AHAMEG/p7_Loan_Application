@@ -24,27 +24,23 @@ import pickle
 # -------------------------------------------------------------------------------------------
 #                                           loadings
 # -------------------------------------------------------------------------------------------
-# df loading
-# -------------
-path = os.path.join('Data/df.csv')
-with open(path, 'rb') as file:
-    df = joblib.load(file)
+
 
 # Model loading
 # -------------
-path = os.path.join('Data/scoring_credit_model.pkl')
+path = os.path.join('Data', 'scoring_credit_model.pkl')
 with open(path, 'rb') as file:
     bestmodel = joblib.load(file)
 
 # threshold loading
 # -------------
-path = os.path.join('Data/threshold_model.pkl')
+path = os.path.join('Data', 'threshold_model.pkl')
 with open(path, 'rb') as file:
     threshold = joblib.load(file)
 
 # dict_cleaned loading
 # -------------
-with open('Data/dict_cleaned.pkl', 'rb') as file:
+with open('Data', 'dict_cleaned.pkl') as file:
     dict_cleaned = joblib.load(file)
 
 # data loading
@@ -60,33 +56,10 @@ y = pd.concat([y_test, y_train], axis=0)
 # get the name of the columns
 preproc_cols = X_train.columns
 
-# st.write("df :", df.head(2))
-# st.write("X_test shape :", X_test.shape)
-# st.write("X_test :", X_test.head(20))
-# st.write("X_test_colonnes :", X_test.columns)
-# st.write("X_train shape :", X_train.shape)
-# st.write("X_train :", x_train_sample.head(10))
-# st.write("X_train :", y_train_sample.head(10))
-# st.write("X_train_colonnes :", X_train.columns)
-# st.write("y_train shape :", y_train.shape)
-# st.write("y_train :", y_train.head(20))
-# st.write("y_train_colonnes :", y_train.columns)
-# st.write("x_cust :", x_cust.head(20))
-
-# compute the data to be used by the best classifier
-
-# # SHAP values of the train set and test set
-# path = os.path.join('shap_vals.pkl')
-# with open(path, 'rb') as file:
-#     shap_vals = joblib.load(file)
-# st.write("shap_vals :", shap_vals)
 # Expected values
-path = os.path.join('Data/expected_values.pkl')
+path = os.path.join('Data', 'expected_values.pkl')
 with open(path, 'rb') as file:
     expected_values = joblib.load(file)
-# st.write("expected_values :", expected_values)
-# st.write("threshold :", threshold)
-# st.write("bestmodel :", bestmodel)
 ###############################################################
 # instantiate Flask object
 app = Flask(__name__)

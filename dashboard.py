@@ -30,7 +30,6 @@ from random import sample
 from shap import TreeExplainer, Explanation
 from shap.plots import waterfall
 import matplotlib.pyplot as plt
-from tkinter import *
 
 
 # ----------------------------------------------------

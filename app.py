@@ -26,25 +26,25 @@ import pickle
 # -------------------------------------------------------------------------------------------
 # df loading
 # -------------
-path = os.path.join('df.csv')
+path = os.path.join('Data/df.csv')
 with open(path, 'rb') as file:
     df = joblib.load(file)
 
 # Model loading
 # -------------
-path = os.path.join('scoring_credit_model.pkl')
+path = os.path.join('Data/scoring_credit_model.pkl')
 with open(path, 'rb') as file:
     bestmodel = joblib.load(file)
 
 # threshold loading
 # -------------
-path = os.path.join('threshold_model.pkl')
+path = os.path.join('Data/threshold_model.pkl')
 with open(path, 'rb') as file:
     threshold = joblib.load(file)
 
 # dict_cleaned loading
 # -------------
-with open('dict_cleaned.pkl', 'rb') as file:
+with open('Data/dict_cleaned.pkl', 'rb') as file:
     dict_cleaned = joblib.load(file)
 
 # data loading
@@ -81,7 +81,7 @@ preproc_cols = X_train.columns
 #     shap_vals = joblib.load(file)
 # st.write("shap_vals :", shap_vals)
 # Expected values
-path = os.path.join('expected_values.pkl')
+path = os.path.join('Data/expected_values.pkl')
 with open(path, 'rb') as file:
     expected_values = joblib.load(file)
 # st.write("expected_values :", expected_values)

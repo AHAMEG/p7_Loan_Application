@@ -30,6 +30,7 @@ from random import sample
 from shap import TreeExplainer, Explanation
 from shap.plots import waterfall
 import matplotlib.pyplot as plt
+from PIL import Image
 
 
 # ----------------------------------------------------
@@ -51,20 +52,18 @@ def main():
     # Display the title
     st.title('Loan application scoring dashboard')
     st.subheader("ABDELKARIM HAMEG - Data Scientist")
+
     # Display the LOGO
-    # path = "Data/LOGO.jpg"
-    # image = PIL.Image.open(path)
+    files = os.listdir('Image_logo')
+    for file in files:
+        img = Image.open(os.path.join('Image_logo', 'LOGO.jpg'))
+        st.sidebar.image(img, width=250)
 
-    path = os.path.join('Data', 'LOGO.jpg')
-    image = PIL.Image.open(path)
-
-
-    st.sidebar.image(image, width=250)
     # Display the loan image
-    path = os.path.join('Data', 'loan.jpg')
-    image = PIL.Image.open(path)
-    st.image(image, width=100)
-
+    files = os.listdir('Image_loan')
+    for file in files:
+        img = Image.open(os.path.join('Image_loan', 'loan.jpg'))
+        st.image(img, width=100)
 
     ######################## Functions #######################################################
     def get_list_display_features(f, def_n, key):
@@ -437,7 +436,7 @@ def main():
         ##########################################################################
         if st.checkbox('show features distribution by class', key=20):
             st.header('Boxplots of the main features')
-            fig, ax = plt.subplots(figsize=(20, 15))
+            fig, ax = plt.subplots(figsize=(20, 10))
             with st.spinner('Boxplot creation in progress...please wait.....'):
                 # Get Shap values for customer
                 shap_vals, expected_vals = values_shap(selected_id)
@@ -492,7 +491,7 @@ def main():
                                                    value_name="values")
 
                 sns.swarmplot(data=df_melt_neigh, x='variables', y='values', hue='TARGET', linewidth=1,
-                              palette=['darkgreen', 'darkred'], marker='o', edgecolor='k', ax=ax)
+                              palette=['darkgreen', 'darkred'], marker='o', size=15, edgecolor='k', ax=ax)
 
                 # -----------------------
                 # Applicant customer data
@@ -507,7 +506,7 @@ def main():
                                                          value_name="values")
 
                 sns.swarmplot(data=df_melt_sel_cust, x='variables', y='values',
-                              linewidth=1, color='y', marker='o', size=10,
+                              linewidth=1, color='y', marker='o', size=20,
                               edgecolor='k', label='applicant customer', ax=ax)
 
                 # legend

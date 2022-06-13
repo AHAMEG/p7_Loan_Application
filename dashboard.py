@@ -52,13 +52,20 @@ def main():
     st.title('Loan application scoring dashboard')
     st.subheader("ABDELKARIM HAMEG - Data Scientist")
     # Display the LOGO
-    path = "lOGO.jpg"
-    image = PIL.Image.open(path)
+    # path = "Data/LOGO.jpg"
+    # image = PIL.Image.open(path)
+
+    path = os.path.join('Data', 'LOGO.jpg')
+    with open(path, 'rb') as file:
+        image = PIL.Image.open(path)
+
+
     st.sidebar.image(image, width=250)
     # Display the loan image
-    path = "loan.jpg"
-    image = PIL.Image.open(path)
-    st.image(image, width=100)
+    path = os.path.join('Data', 'loan.jpg')
+    with open(path, 'rb') as file:
+        image = PIL.Image.open(path)
+        st.image(image, width=100)
 
 
     ######################## Functions #######################################################

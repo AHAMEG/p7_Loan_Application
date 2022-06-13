@@ -56,16 +56,14 @@ def main():
     # image = PIL.Image.open(path)
 
     path = os.path.join('Data', 'LOGO.jpg')
-    with open(path, 'rb') as file:
-        image = PIL.Image.open(path)
+    image = PIL.Image.open(path)
 
 
     st.sidebar.image(image, width=250)
     # Display the loan image
     path = os.path.join('Data', 'loan.jpg')
-    with open(path, 'rb') as file:
-        image = PIL.Image.open(path)
-        st.image(image, width=100)
+    image = PIL.Image.open(path)
+    st.image(image, width=100)
 
 
     ######################## Functions #######################################################

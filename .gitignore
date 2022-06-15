@@ -1,0 +1,17 @@
+dict_cleaned.pkl
+expected_values.pkl
+loan.jpg
+loan_application_20220601.ipynb
+LOGO.jpg
+main.py
+README.md
+requirements.txt
+df.csv
+shap_vals.pkl
+threshold_model.pkl
+X.csv
+X_id.csv
+X_train.csv
+y_train.csv
+scoring_credit_model.pkl
+app_bis.py

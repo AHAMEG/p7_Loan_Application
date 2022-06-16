@@ -15,3 +15,5 @@ X_train.csv
 y_train.csv
 scoring_credit_model.pkl
 app_bis.py
+.env
+/node_modules

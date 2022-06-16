@@ -25,21 +25,27 @@ import pickle
 # -------------------------------------------------------------------------------------------
 # Model loading
 # -------------
-path = os.path.join('scoring_credit_model.pkl')
-with open(path, 'rb') as file:
-    bestmodel = joblib.load(file)
+# path = os.path.join('Data', 'scoring_credit_model.pkl')
+# with open(path, 'rb') as file:
+#     bestmodel = joblib.load(file)
+#
+bestmodel = joblib.load('scoring_credit_model.pkl')
 
-# threshold loading
-# -------------
-path = os.path.join('threshold_model.pkl')
-with open(path, 'rb') as file:
-    threshold = joblib.load(file)
+# # threshold loading
+# # -------------
+# path = os.path.join('threshold_model.pkl')
+# with open(path, 'rb') as file:
+#     threshold = joblib.load(file)
 
-# dict_cleaned loading
-# -------------
-path = os.path.join('dict_cleaned.pkl')
-with open(path, 'rb') as file:
-    dict_cleaned = joblib.load(file)
+threshold = joblib.load('threshold_model.pkl')
+
+# # dict_cleaned loading
+# # -------------
+# path = os.path.join('dict_cleaned.pkl')
+# with open(path, 'rb') as file:
+#     dict_cleaned = joblib.load(file)
+
+dict_cleaned = joblib.load('dict_cleaned.pkl')
 
 # data loading
 # -------------
@@ -54,10 +60,12 @@ y = pd.concat([y_test, y_train], axis=0)
 # get the name of the columns
 preproc_cols = X_train.columns
 
-# Expected values
-path = os.path.join('expected_values.pkl')
-with open(path, 'rb') as file:
-    expected_values = joblib.load(file)
+# # Expected values
+# path = os.path.join('expected_values.pkl')
+# with open(path, 'rb') as file:
+#     expected_values = joblib.load(file)
+
+expected_values = joblib.load('expected_values.pkl')
 ###############################################################
 # instantiate Flask object
 app = Flask(__name__)

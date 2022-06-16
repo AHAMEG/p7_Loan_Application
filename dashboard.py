@@ -1,33 +1,33 @@
 # ------------------------------------
 # import packages
 # ------------------------------------
-import pandas
-from sklearn.manifold import trustworthiness
-import random
-from sklearn.manifold import TSNE
-import PIL.Image
+# import pandas
+# from sklearn.manifold import trustworthiness
+# import random
+# from sklearn.manifold import TSNE
+# import PIL.Image
 import requests
 import json
 from pandas import json_normalize
-import numpy as np
+# import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-import plotly.express as px
+# import plotly.express as px
 import streamlit as st
-from flask import Flask, request, jsonify, render_template
-from lightgbm import LGBMClassifier
-import sklearn as sk
-import joblib
-import imblearn
+# from flask import Flask, request, jsonify, render_template
+# from lightgbm import LGBMClassifier
+# import sklearn as sk
+# import joblib
+# import imblearn
 import seaborn as sns
-import missingno as msno
-import sys
+# import missingno as msno
+# import sys
 import os
 import shap
-import time
-import pickle
-from random import sample
-from shap import TreeExplainer, Explanation
+# import time
+# import pickle
+# from random import sample
+# from shap import TreeExplainer, Explanation
 from shap.plots import waterfall
 import matplotlib.pyplot as plt
 from PIL import Image
@@ -54,18 +54,19 @@ def main():
     st.subheader("ABDELKARIM HAMEG - Data Scientist")
 
     # Display the LOGO
-    files = os.listdir('Image_logo')
-    for file in files:
-        img = Image.open(os.path.join('Image_logo', 'LOGO.jpg'))
-        st.sidebar.image(img, width=250)
+    # files = os.listdir('Image_logo')
+    # for file in files:
+    img = Image.open('Image_logo')
+    st.sidebar.image(img, width=250)
 
-    # Display the loan image
-    files = os.listdir('Image_loan')
-    for file in files:
-        img = Image.open(os.path.join('Image_loan', 'loan.jpg'))
-        st.image(img, width=100)
+    # # Display the loan image
+    # files = os.listdir('Image_loan')
+    # for file in files:
+    img = Image.open('Image_loan')
+    st.image(img, width=100)
 
-    ######################## Functions #######################################################
+    # Functions
+    # ----------
     def get_list_display_features(f, def_n, key):
         all_feat = f
         n = st.slider("Nb of features to display",
@@ -79,57 +80,6 @@ def main():
             sorted(all_feat),
             default=disp_cols, key=key)
         return box_cols
-
-    def plot_scatter_projection(X, ser_clust, n_display, plot_highlight, x_customer,
-                                figsize=(10, 6), size=10, fontsize=12, columns=None):
-        fig = plt.figure(figsize=figsize)
-        ax = fig.add_subplot(111)
-
-        X_all = X  # pd.concat([X, x_cust], axis=0)
-        ind_neigh = list(plot_highlight.index)
-        customer_idx = x_customer.index[0]
-
-        columns = X_all.columns if columns is None else columns
-
-        # st.write('X_all :', X_all.head(5))
-        # st.write('ind_neigh :', ind_neigh)
-        # st.write('customer_idx :', customer_idx)
-        # st.write('columns', columns)
-        df_data = X_all.loc[:, columns]
-        # st.write('df_data', df_data.head(5))
-        ax.set_title('Two features compared', fontsize=fontsize + 2, fontweight='bold')
-        ax.set_xlabel(columns[0], fontsize=fontsize)
-        ax.set_ylabel(columns[1], fontsize=fontsize)
-        # Showing points, cluster by cluster
-        colors = ['green', 'red']
-        for i, name_clust in enumerate(ser_clust.unique()):
-            ind = ser_clust[ser_clust == name_clust].index
-
-            if n_display is not None:
-                display_samp = random.sample(set(list(X.index)), 200)
-                ind = [i for i in ind if i in display_samp]
-            # plot only a random selection of random sample points
-            ax.scatter(df_data.loc[ind].iloc[:, 0],
-                       df_data.loc[ind].iloc[:, 1],
-                       s=size, alpha=0.7, c=colors[i], zorder=1,
-                       label=f"Random sample ({name_clust})")
-            # plot nearest neighbors
-            ax.scatter(df_data.loc[ind_neigh].iloc[:, 0],
-                       df_data.loc[ind_neigh].iloc[:, 1],
-                       s=size * 5, alpha=0.7, c=colors[i], ec='k', zorder=3,
-                       label=f"Nearest neighbors ({name_clust})")
-
-            # plot the applicant customer
-            ax.scatter(df_data.loc[customer_idx].iloc[:, 0],
-                       df_data.loc[customer_idx].iloc[:, 1],
-                       s=size * 10, alpha=0.7, c='yellow', ec='k', zorder=10,
-                       label="Applicant customer")
-
-            ax.tick_params(axis='both', which='major', labelsize=fontsize)
-
-        ax.legend(prop={'size': fontsize - 2})
-
-        return fig
 
     ###############################################################################
     #                      LIST OF API REQUEST FUNCTIONS
@@ -206,7 +156,6 @@ def main():
         expec_vals = pd.DataFrame(content['expected_vals'].values())
         return shapvals, expec_vals
 
-
     #############################################
     #############################################
     # Get list of expected values (cached)
@@ -282,8 +231,7 @@ def main():
         target_thousand_neig = (pd.Series(content['y_thousand_neigh']).rename('TARGET'))
         return data_thousand_neig, target_thousand_neig, x_custo
 
-
-            #############################################################################
+    #############################################################################
     #                          Selected id
     #############################################################################
     # list of customer's ID's
@@ -310,12 +258,7 @@ def main():
     @st.cache(allow_output_mutation=True)  #
     def force_plot():
         shap.initjs()
-        return shap.force_plot(expected_val, shap_vals[0, :], matplotlib=True)
-
-    # # Local SHAP Graphs
-    # @st.cache
-    # def summary_plot():
-    #     return shap.summary_plot(shap_vals, features=x_tr, feature_names=features)  # .sample(1000)
+        return shap.force_plot(expected_vals[0][0], shap_vals[0, :], matplotlib=True)
 
     # Gauge Chart
     @st.cache
@@ -356,10 +299,7 @@ def main():
         fig.update_layout(paper_bgcolor="lavender", font={'color': "darkblue", 'family': "Arial"})
         return fig
 
-    def boxplot():
-        fig = sns.boxplot(x="variables", y="values", hue="TARGET",
-                          data=df_melt_neigh, palette="Set2", fliersize=0)
-        return fig
+
 
     ##############################################################################
     #                         Customer's data checkbox
@@ -399,7 +339,7 @@ def main():
         ##########################################################################
         #                 Display local SHAP waterfall checkbox
         ##########################################################################
-        if st.checkbox('Display local interpretation', key=25):
+        if st.checkbox('Display waterfall local interpretation', key=25):
             with st.spinner('SHAP waterfall plots displaying in progress..... Please wait.......'):
                 # Get Shap values for customer & expected values
                 shap_vals, expected_vals = values_shap(selected_id)
@@ -416,6 +356,7 @@ def main():
                                         key=14)
                 # draw the waterfall graph (only for the customer with scaling
                 waterfall_plot(nb_features, features, expected_vals[0][0], shap_vals.values)
+
                 plt.gcf()
                 st.pyplot(plt.gcf())
                 # Add markdown
@@ -476,7 +417,7 @@ def main():
 
                 sns.boxplot(data=df_melt_thousand_neigh, x='variables', y='values',
                             hue='TARGET', linewidth=1, width=0.4,
-                            palette=['tab:green', 'tab:red'], showfliers=False,
+                            palette=['tab:red', 'tab:green'], showfliers=False,
                             saturation=0.5, ax=ax)
 
                 # ------------------------------

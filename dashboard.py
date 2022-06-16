@@ -56,13 +56,13 @@ def main():
     # Display the LOGO
     # files = os.listdir('Image_logo')
     # for file in files:
-    img = Image.open("LOGO")
+    img = Image.open("LOGO.png")
     st.sidebar.image(img, width=250)
 
     # # Display the loan image
     # files = os.listdir('Image_loan')
     # for file in files:
-    img = Image.open("loan.jpg")
+    img = Image.open("loan.png")
     st.image(img, width=100)
 
     # Functions

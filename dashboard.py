@@ -56,7 +56,7 @@ def main():
     # Display the LOGO
     # files = os.listdir('Image_logo')
     # for file in files:
-    img = Image.open("LOGO.jpg")
+    img = Image.open("LOGO")
     st.sidebar.image(img, width=250)
 
     # # Display the loan image

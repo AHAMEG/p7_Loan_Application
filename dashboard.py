@@ -40,8 +40,9 @@ def main():
     # ------------------------------------------------
     # local API (à remplacer par l'adresse de l'application déployée)
     # -----------------------------------------------
-    API_URL = "http://127.0.0.1:5000/app/"
+    # API_URL = "http://127.0.0.1:5000/app/"
     # Local URL: http://localhost:8501
+    API_URL = "https://oc-app-flask-mm.herokuapp.com/app/"
     # -----------------------------------------------
     # Configuration of the streamlit page
     # -----------------------------------------------

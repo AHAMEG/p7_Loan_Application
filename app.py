@@ -20,27 +20,24 @@ from sklearn.neighbors import NearestNeighbors
 import shap
 import time
 import pickle
-
 # -------------------------------------------------------------------------------------------
 #                                           loadings
 # -------------------------------------------------------------------------------------------
-
-
 # Model loading
 # -------------
-path = os.path.join('Data', 'scoring_credit_model.pkl')
+path = os.path.join('scoring_credit_model.pkl')
 with open(path, 'rb') as file:
     bestmodel = joblib.load(file)
 
 # threshold loading
 # -------------
-path = os.path.join('Data', 'threshold_model.pkl')
+path = os.path.join('threshold_model.pkl')
 with open(path, 'rb') as file:
     threshold = joblib.load(file)
 
 # dict_cleaned loading
 # -------------
-path = os.path.join('Data', 'dict_cleaned.pkl')
+path = os.path.join('dict_cleaned.pkl')
 with open(path, 'rb') as file:
     dict_cleaned = joblib.load(file)
 
@@ -58,7 +55,7 @@ y = pd.concat([y_test, y_train], axis=0)
 preproc_cols = X_train.columns
 
 # Expected values
-path = os.path.join('Data', 'expected_values.pkl')
+path = os.path.join('expected_values.pkl')
 with open(path, 'rb') as file:
     expected_values = joblib.load(file)
 ###############################################################
@@ -196,7 +193,6 @@ def shap_value():
                     'shap_val_neigh': shap_val_neigh_json,  # double liste
                     'expected_vals': expected_vals_json,  # liste
                     'shap_val_cust': shap_vals_cust_json})  # double liste
-
 
 
 # return all data of training set when requested

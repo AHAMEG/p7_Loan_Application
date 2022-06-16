@@ -15,3 +15,4 @@ scikit_learn==1.1.1
 seaborn==0.11.2
 shap==0.40.0
 streamlit==1.9.2
+PIL==9.1.1

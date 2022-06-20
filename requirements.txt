@@ -7,3 +7,8 @@ seaborn==0.11.2
 shap==0.40.0
 streamlit==1.9.0
 protobuf==3.20.*
+numpy
+scipy
+dill
+ipython
+scikit_learn

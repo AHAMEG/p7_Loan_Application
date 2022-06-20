@@ -46,15 +46,19 @@ threshold = joblib.load('threshold_model.pkl')
 
 # dict_cleaned = joblib.load('dict_cleaned.pkl')
 
+# Data save :
+
+
 # data loading
 # -------------
-X_test = joblib.load('x_test_sample.csv')
-X_train = joblib.load('x_train_sample.csv')
-y_test = joblib.load('y_test_sample.csv')
-y_train = joblib.load('y_train_sample.csv')
+X_test = joblib.load('X_test_sample_v2.csv')
+X_train = joblib.load('X_train_sample_v2.csv')
+y_test = joblib.load('y_test_sample_v2.csv')
+y_train = joblib.load('y_train_sample_v2.csv')
 
-x_train_sample = X_train.iloc[0: 1000]
-y_train_sample = y_train.iloc[0: 1000]
+
+x_train_sample = X_train.iloc[0: 100]
+y_train_sample = y_train.iloc[0: 100]
 
 # X_test = dict_cleaned['X_test']
 # X_train = dict_cleaned['X_train']
@@ -91,7 +95,7 @@ def index():
 @app.route('/app/id/')
 def ids_list():
     # Extract list of all the 'SK_ID_CURR' ids in the X_test dataframe
-    customers_id_list = pd.Series(list(X.head(1000).index.sort_values()))  # X_test
+    customers_id_list = pd.Series(list(X.index.sort_values()))  # X_test
     # Convert pd.Series to JSON
     customers_id_list_json = json.loads(customers_id_list.to_json())
     # Returning the processed data
@@ -103,8 +107,8 @@ def ids_list():
 @app.route('/app/data_cust/')  # ==> OK
 def selected_cust_data():  # selected_id
     selected_id_customer = int(request.args.get('SK_ID_CURR'))
-    x_cust = X.head(1000).loc[selected_id_customer: selected_id_customer]  # X_test
-    y_cust = y.head(1000).loc[selected_id_customer: selected_id_customer] # y_test
+    x_cust = X.loc[selected_id_customer: selected_id_customer]  # X_test
+    y_cust = y.loc[selected_id_customer: selected_id_customer] # y_test
     # Convert pd.Series to JSO
     data_x_json = json.loads(x_cust.to_json())
     y_cust_json = json.loads(y_cust.to_json())
@@ -118,16 +122,16 @@ def selected_cust_data():  # selected_id
 def get_df_neigh(selected_id_customer):
     # fit nearest neighbors among the selection
     NN = NearestNeighbors(n_neighbors=20)
-    NN.fit(X_train.head(1000))  # X_train_NN
+    NN.fit(X_train)  # X_train_NN
     X_cust = X.loc[selected_id_customer: selected_id_customer]  # X_test
     idx = NN.kneighbors(X=X_cust,
                         n_neighbors=20,
                         return_distance=False).ravel()
-    nearest_cust_idx = list(X_train.head(1000).iloc[idx].index)
+    nearest_cust_idx = list(X_train.iloc[idx].index)
     # data and target of neighbors
     # ----------------------------
-    x_neigh = X_train.head(1000).loc[nearest_cust_idx, :]
-    y_neigh = y_train.head(1000).loc[nearest_cust_idx]
+    x_neigh = X_train.loc[nearest_cust_idx, :]
+    y_neigh = y_train.loc[nearest_cust_idx]
 
     return x_neigh, y_neigh
 
@@ -150,17 +154,17 @@ def neigh_cust():
 # find 10000 nearest neighbors among the training set
 def get_df_thousand_neigh(selected_id_customer):
     # fit nearest neighbors among the selection
-    thousand_nn = NearestNeighbors(n_neighbors=1000)  # len(X_train)
-    thousand_nn.fit(X_train.head(1000))  # X_train_NN
-    X_cust = X.head(1000).loc[selected_id_customer: selected_id_customer]   # X_test
+    thousand_nn = NearestNeighbors(n_neighbors=500)  # len(X_train)
+    thousand_nn.fit(X_train)  # X_train_NN
+    X_cust = X.loc[selected_id_customer: selected_id_customer]   # X_test
     idx = thousand_nn.kneighbors(X=X_cust,
-                                 n_neighbors=1000,  # len(X_train)
+                                 n_neighbors=500,  # len(X_train)
                                  return_distance=False).ravel()
-    nearest_cust_idx = list(X_train.head(1000).iloc[idx].index)
+    nearest_cust_idx = list(X_train.iloc[idx].index)
     # data and target of neighbors
     # ----------------------------
-    x_thousand_neigh = X_train.head(1000).loc[nearest_cust_idx, :]
-    y_thousand_neigh = y_train.head(1000).loc[nearest_cust_idx]
+    x_thousand_neigh = X_train.loc[nearest_cust_idx, :]
+    y_thousand_neigh = y_train.loc[nearest_cust_idx]
     return x_thousand_neigh, y_thousand_neigh, X_cust
 
 
@@ -237,7 +241,7 @@ def scoring_cust():
     # Parse http request to get arguments (sk_id_cust)
     customer_id = int(request.args.get('SK_ID_CURR'))
     # Get the data for the customer (pd.DataFrame)
-    X_cust = X.head(1000).loc[customer_id:customer_id] # X_test
+    X_cust = X.loc[customer_id:customer_id] # X_test
     # X_cust = X_cust.drop(["SK_ID_CURR"], axis=1)
     # Compute the score of the customer (using the whole pipeline)
     score_cust = bestmodel.predict_proba(X_cust)[:, 1][0]

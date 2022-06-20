@@ -19,7 +19,7 @@ def main():
     # ------------------------------------------------
     # local API (à remplacer par l'adresse de l'application déployée)
     # -----------------------------------------------
-    API_URL = "http://127.0.0.1:5000/app/"
+    API_URL = "https://loan-heroku.herokuapp.com"
     # Local URL: http://localhost:8501
     # -----------------------------------------------
     # Configuration of the streamlit page

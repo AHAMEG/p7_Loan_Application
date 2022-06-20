@@ -1,24 +1,10 @@
 # Load librairies
-import streamlit as st
-from PIL import Image
-import numpy as np
-import requests
-import os
-import sys
 import joblib
-import imblearn
-import matplotlib.pyplot as plt
-import seaborn as sns
 import pandas as pd
-import sklearn as sk
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify
 import json
-from json import JSONEncoder
-import missingno as msno
 from sklearn.neighbors import NearestNeighbors
 import shap
-import time
-import pickle
 # -------------------------------------------------------------------------------------------
 #                                           loadings
 # -------------------------------------------------------------------------------------------

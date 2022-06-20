@@ -1,38 +1,17 @@
 # ------------------------------------
 # import packages
 # ------------------------------------
-# import pandas
-# from sklearn.manifold import trustworthiness
-# import random
-# from sklearn.manifold import TSNE
-# import PIL.Image
 import requests
 import json
 from pandas import json_normalize
-# import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-# import plotly.express as px
 import streamlit as st
-# from flask import Flask, request, jsonify, render_template
-# from lightgbm import LGBMClassifier
-# import sklearn as sk
-# import joblib
-# import imblearn
 import seaborn as sns
-# import missingno as msno
-# import sys
-import os
 import shap
-# import time
-# import pickle
-# from random import sample
-# from shap import TreeExplainer, Explanation
 from shap.plots import waterfall
 import matplotlib.pyplot as plt
 from PIL import Image
-
-
 # ----------------------------------------------------
 # main function
 # ----------------------------------------------------

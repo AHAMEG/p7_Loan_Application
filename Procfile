@@ -1,1 +1,1 @@
-web: streamlit run dashboard.py -p $PORT
+web: streamlit run --server.port $PORT dashboard.py

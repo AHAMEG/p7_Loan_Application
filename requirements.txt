@@ -11,4 +11,3 @@ numpy
 scipy
 dill
 scikit_learn
-clik

@@ -1,1 +1,1 @@
-web: gunicorn dashboard:app --log-file -
+web: gunicorn dashboard:app

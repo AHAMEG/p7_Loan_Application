@@ -12,3 +12,4 @@ scipy
 dill
 ipython
 scikit_learn
+gunicorn

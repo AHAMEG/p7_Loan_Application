@@ -1,1 +1,1 @@
-web: gunicorn dashboard:app
+gunicorn "dashboard:create_app()" --log-file 

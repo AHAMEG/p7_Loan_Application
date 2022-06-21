@@ -1,1 +1,1 @@
-web: streamlit run --server.port $PORT dashboard.py
+web: gunicorn dashboard:app --log-file -

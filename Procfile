@@ -1,1 +1,1 @@
-gunicorn "dashboard:create_app()" --log-file 
+web: streamlit run --server.port $PORT dashboard.py

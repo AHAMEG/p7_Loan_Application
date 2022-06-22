@@ -396,7 +396,7 @@ def main():
 
                 sns.boxplot(data=df_melt_thousand_neigh, x='variables', y='values',
                             hue='TARGET', linewidth=1, width=0.4,
-                            palette=['tab:red', 'tab:green'], showfliers=False,
+                            palette=['tab:green', 'tab:red'], showfliers=False,
                             saturation=0.5, ax=ax)
 
                 # ------------------------------

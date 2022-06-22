@@ -7,6 +7,10 @@ Le Dashboard est visible en cliquant sur le lien suivant :
 
 https://ddloan.herokuapp.com/
 
+La démo est visible en cliquant sur le lien suivant :
+
+https://youtu.be/Q49G9iBLFGI
+
 il permet d'afficher certaines données concernant le client selectionné dans la liste : 
 
 * Risque de défaut (%)

@@ -5,6 +5,7 @@ Dashboard Streamlit de scoring déployé sur serveurs Streamlit
 
 Le Dashboard est visible en cliquant sur le lien suivant : 
 
+https://ddloan.herokuapp.com/
 
 il permet d'afficher certaines données concernant le client selectionné dans la liste : 
 

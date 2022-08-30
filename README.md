@@ -18,3 +18,5 @@ il permet d'afficher certaines données concernant le client selectionné dans l
 * Données du client
 * Graphe situant le client par rapport aux autres clients et aux clients similaires 
 * Importance globale et locale des paramètres dans la décision du modèle 
+
+Ce projet a été **soutenu** et **validé** le 27 juin 2022
